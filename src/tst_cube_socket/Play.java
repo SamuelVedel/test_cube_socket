@@ -135,6 +135,10 @@ public class Play {
 		vf.setVisible(true);
 	}
 
+	private int getSizeOfActionsMessage() {
+		return 1+mes.size()*Me.getSizeOfActionsMessage();
+	}
+
 	private void actions() {
 		if (isHost()) {
 			mes.add(new Me(mes.size(), this));
@@ -144,11 +148,13 @@ public class Play {
 		while (!ready);
 		while (true) {
 			if (isHost()) {
-				String message = ""+(char)MessageType.ACTIONS_MSG.getByte();
+				byte[] message = new byte[getSizeOfActionsMessage()];
+				message[0] = MessageType.ACTIONS_MSG.getByte();
+				int offset = 1;
 
 				for (int i = mes.size()-1; i >= 0; --i) {
 					mes.get(i).action();
-					message += mes.get(i).writeActions();
+					offset = mes.get(i).writeActions(message, offset);
 					if (mes.get(i).noMoreReasonToBe) {
 						mes.remove(i);
 					}

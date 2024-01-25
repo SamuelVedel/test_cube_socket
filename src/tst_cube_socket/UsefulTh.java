@@ -54,7 +54,7 @@ public abstract class UsefulTh {
         System.out.print("{");
         for (int i = 0; i < message.length; ++i) {
             if (i > 0) System.out.print(", ");
-            System.out.print((int)(char)message[i]);
+            System.out.print(message[i]);
         }
         System.out.print("}"+prefix);
     }

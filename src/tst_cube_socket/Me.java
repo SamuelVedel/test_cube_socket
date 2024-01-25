@@ -57,12 +57,20 @@ public class Me {
         }
     }
 
-    public String writeActions() {
-        String message = ""+(char)id;
-        message += UsefulTh.writeIntInStr(x);
-        message += UsefulTh.writeIntInStr(y);
-        message += (noMoreReasonToBe? (char)1: (char)0);
-        return message;
+    public static int getSizeOfActionsMessage() {
+        return 1+2*UsefulTh.SIZE_OF_INT+1;
+    }
+
+    public int writeActions(byte[] message, int offset) {
+        message[offset] = (byte)id;
+        ++offset;
+        UsefulTh.writeInt(message, offset, x);
+        offset += UsefulTh.SIZE_OF_INT;
+        UsefulTh.writeInt(message, offset, y);
+        offset += UsefulTh.SIZE_OF_INT;
+        message[offset] = (noMoreReasonToBe? (byte)1: (byte)0);
+        ++offset;
+        return offset;
     }
 
     public int readActions(byte[] message, int offset) {
