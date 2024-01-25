@@ -85,28 +85,23 @@ class Server {
 				out = new PrintWriter(clientSo.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(clientSo.getInputStream()));
 
-				String inputLine;
-				while ((inputLine = in.readLine()) != null) {
-					//System.out.println(inputLine);
-					/*for (int i = 0; i < inputLine.length(); ++i) {
-						System.out.println((int)inputLine.charAt(i));
-					}*/
+				while (!stopped) {
+				char[] sizeStr = new char[UsefulTh.SIZE_OF_INT];
+				in.read(sizeStr, 0, UsefulTh.SIZE_OF_INT);
+				int size = UsefulTh.readIntInChars(sizeStr);
+				char[] message = new char[size];
+				in.read(message, 0, size);
 
-					if (msgListener != null) msgListener.recieveMessage(id, inputLine);
-					if (inputLine.charAt(0) == MessageType.HEY.getId()) {
-						sendMessageToOthers(inputLine, this);
-					} else if (inputLine.charAt(0) == MessageType.BYE.getId()) {
-						sendMessageToOthers(inputLine, this);
-						break;
-					} else if (inputLine.charAt(0) == MessageType.STOP_SERVER.getId()) {
-						sendMessageToOthers(inputLine, this);
-						stopServer();
-					} /*else {
-						if (id == 0) sendMessageToOthers(inputLine, this);
-						else sendToHost(inputLine);
-
-					}*/
+				if (msgListener != null) msgListener.recieveMessage(-1, message);
+				if (message[0] == MessageType.HEY.getId()) {
+					sendMessageToOthers(UsefulTh.charsToStr(message), this);
+				} else if (message[0] == MessageType.BYE.getId()) {
+					sendMessageToOthers(UsefulTh.charsToStr(message), this);
+				} else if (message[0] == MessageType.STOP_SERVER.getId()) {
+					sendMessageToOthers(UsefulTh.charsToStr(message), this);
+					stopServer();
 				}
+			}
 
 				stopClient();
 			} catch (IOException e) {
@@ -126,8 +121,9 @@ class Server {
 		}
 
 		public void sendMessage(String message) {
+			message = UsefulTh.writeIntInStr(message.length())+message;
 			UsefulTh.printMessage(message);
-			out.println(message);
+			out.print(message);
 		}
 	}
 }

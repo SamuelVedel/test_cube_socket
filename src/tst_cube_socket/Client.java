@@ -36,8 +36,9 @@ public class Client {
 	}
 	
 	public void sendMessage(String message) {
+		message = UsefulTh.writeIntInStr(message.length())+message;
 		//System.out.print("hey:"+message);
-		out.println(message);
+		out.print(message);
 	}
 
 	public void stopConnection() {
@@ -53,11 +54,17 @@ public class Client {
 
 	public void recieveMessages() {
 		try {
-			String inputLine;
-			while ((inputLine = in.readLine()) != null && !stopped) {
-				//System.out.println(inputLine);
-				if (msgListener != null) msgListener.recieveMessage(-1, inputLine);
-				if (inputLine.charAt(0) == MessageType.STOP_SERVER.getId()) {
+			while (!stopped) {
+				System.out.println("hey");
+				char[] sizeStr = new char[UsefulTh.SIZE_OF_INT];
+				in.read(sizeStr, 0, UsefulTh.SIZE_OF_INT);
+				int size = UsefulTh.readIntInChars(sizeStr);
+				char[] message = new char[size];
+				in.read(message, 0, size);
+
+				UsefulTh.printMessage(message);
+				if (msgListener != null) msgListener.recieveMessage(-1, message);
+				if (message[0] == MessageType.STOP_SERVER.getId()) {
 					stopConnection();
 					break;
 				}

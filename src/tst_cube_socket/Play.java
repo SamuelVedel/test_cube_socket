@@ -28,26 +28,27 @@ public class Play {
 	private boolean ready = false;
 
 	private MessageListener msgListener = new MessageListener() {
+		
 		@Override
-		public void recieveMessage(int id, String message) {
-			if (message.charAt(0) == MessageType.HEY.getId()) {
+		public void recieveMessage(int id, char[] message) {
+			if (message[0] == MessageType.HEY.getId()) {
 				addAMe();
-			} else if (message.charAt(0) == MessageType.BYE.getId()) {
+			} else if (message[0] == MessageType.BYE.getId()) {
 				mes.get(id).noMoreReasonToBe = true;
 			}
 
 			if (isHost()) {
-				if (message.charAt(0) == MessageType.HEY.getId()) {
+				if (message[0] == MessageType.HEY.getId()) {
 					server.sendMessageTo(id, ""+MessageType.WELCOME.getId()+(char)id);
-				} else if (message.charAt(0) == MessageType.OTHER.getId()) {
-					mes.get((int)message.charAt(1)).recieveMessage(message);
+				} else if (message[0] == MessageType.OTHER.getId()) {
+					mes.get((int)message[1]).recieveMessage(message);
 				}
 			} else {
 				UsefulTh.printMessage(message);
-				if (message.charAt(0) == MessageType.ACTIONS_MSG.getId() && ready) {
+				if (message[0] == MessageType.ACTIONS_MSG.getId() && ready) {
 					readActions(message);
-				} else if (message.charAt(0) == MessageType.WELCOME.getId()) {
-					setId((int)message.charAt(1)+1);
+				} else if (message[0] == MessageType.WELCOME.getId()) {
+					setId((int)message[1]+1);
 					for (int i = 0; i <= getId(); ++i) {
 						addAMe();
 					}
@@ -113,11 +114,11 @@ public class Play {
 		this.id = id;
 	}
 
-	private void readActions(String message) {
+	private void readActions(char[] message) {
 		//UsefulTh.printMessage(message);
 		int offset = 1;
-		while (offset < message.length()) {
-			offset = mes.get((int)message.charAt(offset)).readActions(message, offset);
+		while (offset < message.length) {
+			offset = mes.get((int)message[offset]).readActions(message, offset);
 		}
 		vf.repaint();
 		toolkit.sync();

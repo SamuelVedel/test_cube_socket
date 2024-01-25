@@ -8,7 +8,7 @@ public class Me {
     private int id;
     public boolean noMoreReasonToBe = false;
 
-    private int x = 10, y = 10;
+    private int x = 0, y = 0;
     private static final int WIDTH = 50, HEIGHT = WIDTH;
     private final int v = 3;
 
@@ -59,19 +59,19 @@ public class Me {
 
     public String writeActions() {
         String message = ""+(char)id;
-        message += UsefulTh.writeInt(x);
-        message += UsefulTh.writeInt(y);
+        message += UsefulTh.writeIntInStr(x);
+        message += UsefulTh.writeIntInStr(y);
         message += (noMoreReasonToBe? (char)1: (char)0);
         return message;
     }
 
-    public int readActions(String message, int offset) {
+    public int readActions(char[] message, int offset) {
         ++offset;
-        x = UsefulTh.readInt(message, offset);
+        x = UsefulTh.readIntInChars(message, offset);
         offset += UsefulTh.SIZE_OF_INT;
-        y = UsefulTh.readInt(message, offset);
+        y = UsefulTh.readIntInChars(message, offset);
         offset += UsefulTh.SIZE_OF_INT;
-        if (message.charAt(offset) > 1) noMoreReasonToBe = true;
+        if (message[offset] > 1) noMoreReasonToBe = true;
         ++offset;
         return offset;
     }
@@ -81,17 +81,17 @@ public class Me {
         play.client.sendMessage(message);
     }
 
-    public void recieveMessage(String message) {
-        if (message.charAt(2) == MessageType.PRESSED_MSG.getId()) {
+    public void recieveMessage(char[] message) {
+        if (message[2] == MessageType.PRESSED_MSG.getId()) {
             recievePressed(message);
         }
     }
 
-    private void recievePressed(String message) {
-        if (message.charAt(4) == 0) rightPressed = (message.charAt(3) == 1);
-        if (message.charAt(4) == 1) downPressed = (message.charAt(3) == 1);
-        if (message.charAt(4) == 2) leftPressed = (message.charAt(3) == 1);
-        if (message.charAt(4) == 3) upPressed = (message.charAt(3) == 1);
+    private void recievePressed(char[] message) {
+        if (message[4] == 0) rightPressed = (message[3] == 1);
+        if (message[4] == 1) downPressed = (message[3] == 1);
+        if (message[4] == 2) leftPressed = (message[3] == 1);
+        if (message[4] == 3) upPressed = (message[3] == 1);
     }
 
     public void display(Graphics2D g2d) {
