@@ -19,29 +19,9 @@ public abstract class UsefulTh {
         int value = 0;
         for (int i = SIZE_OF_INT-1; i >= 0; --i) {
             value <<= 8;
-            value += (char)bytes[offset+i];
-        }
-        return value;
-    }
-
-    public static String writeIntInStr(int value) {
-        String str = "";
-        for (int i = 0; i < SIZE_OF_INT; ++i) {
-            str += (char)(value&0xFF);
-            value >>= 8;
-        }
-        return str;
-    }
-
-    public static int readIntInStr(String str) {
-        return readIntInStr(str, 0);
-    }
-
-    public static int readIntInStr(String str, int offset) {
-        int value = 0;
-        for (int i = SIZE_OF_INT-1; i >= 0; --i) {
-            value += (int)str.charAt(offset+i);
-            value <<= 8;
+            byte b = bytes[offset+i];
+            if (b >= 0) value += b;
+            else value += (-(int)b)^0xFF-1;
         }
         return value;
     }
@@ -70,13 +50,5 @@ public abstract class UsefulTh {
             System.out.print((int)message.charAt(i));
         }
         System.out.print("}"+prefix);
-    }
-
-    public static String charsToStr(char[] chars) {
-        String str = "";
-        for (char ch : chars) {
-            str += ch;
-        }
-        return str;
     }
 }

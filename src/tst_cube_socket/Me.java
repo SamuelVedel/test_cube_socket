@@ -81,7 +81,6 @@ public class Me {
         offset += UsefulTh.SIZE_OF_INT;
         if (message[offset] > 1) noMoreReasonToBe = true;
         ++offset;
-        System.out.println(x+" "+y);
         return offset;
     }
 

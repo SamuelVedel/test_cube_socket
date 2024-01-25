@@ -44,7 +44,6 @@ public class Play {
 					mes.get(message[1]).recieveMessage(message);
 				}
 			} else {
-				UsefulTh.printMessage(message);
 				if (message[0] == MessageType.ACTIONS_MSG.getByte() && ready) {
 					readActions(message);
 				} else if (message[0] == MessageType.WELCOME.getByte()) {
@@ -115,7 +114,6 @@ public class Play {
 	}
 
 	private void readActions(byte[] message) {
-		//UsefulTh.printMessage(message);
 		int offset = 1;
 		while (offset < message.length) {
 			offset = mes.get((char)message[offset]).readActions(message, offset);
