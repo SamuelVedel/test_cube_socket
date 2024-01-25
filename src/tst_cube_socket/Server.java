@@ -2,6 +2,7 @@ package tst_cube_socket;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 class Server {
@@ -43,12 +44,16 @@ class Server {
 		}
 	}
 
-	public void sendMessageToAll(String message) {
+	public void sendMessageTo(int id, byte[] message) {
+		cvhs.get(id).sendMessage(message);
+	}
+
+	public void sendMessageToAll(byte[] message) {
 		//UsefulTh.printMessage(message);
 		sendMessageToOthers(message, null);
 	}
 
-	public void sendMessageToOthers(String message, ConvClientHandler src) {
+	public void sendMessageToOthers(byte[] message, ConvClientHandler src) {
 		for (int i = cvhs.size()-1; i >= 0; --i) {
 			ConvClientHandler client = cvhs.get(i);
 			if (!client.done) {
@@ -60,7 +65,15 @@ class Server {
 	}
 
 	public void sendMessageTo(int id, String message) {
-		cvhs.get(id).sendMessage(message);
+		sendMessageTo(id, message.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public void sendMessageToAll(String message) {
+		sendMessageToAll(message.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public void sendMessageToOthers(String message, ConvClientHandler src) {
+		sendMessageToOthers(message.getBytes(StandardCharsets.UTF_8), src);
 	}
 
 	/*public void sendToHost(String message) {
@@ -70,8 +83,8 @@ class Server {
 	private class ConvClientHandler extends Thread {
 		private Socket clientSo;
 		private int id;
-		private PrintWriter out;
-		private BufferedReader in;
+		private DataOutputStream out;
+		private DataInputStream in;
 		private boolean done = false;
 
 		private ConvClientHandler(Socket clientSo, int id) {
@@ -82,48 +95,55 @@ class Server {
 		@Override
 		public void run() {
 			try {
-				out = new PrintWriter(clientSo.getOutputStream(), true);
-				in = new BufferedReader(new InputStreamReader(clientSo.getInputStream()));
+				out = new DataOutputStream(clientSo.getOutputStream());
+				in = new DataInputStream(new BufferedInputStream(clientSo.getInputStream()));
 
 				while (!stopped) {
-				char[] sizeStr = new char[UsefulTh.SIZE_OF_INT];
-				in.read(sizeStr, 0, UsefulTh.SIZE_OF_INT);
-				int size = UsefulTh.readIntInChars(sizeStr);
-				char[] message = new char[size];
-				in.read(message, 0, size);
+					int length = in.readInt();
+					byte[] message = new byte[length];
+					in.readFully(message, 0, length);
 
-				if (msgListener != null) msgListener.recieveMessage(-1, message);
-				if (message[0] == MessageType.HEY.getId()) {
-					sendMessageToOthers(UsefulTh.charsToStr(message), this);
-				} else if (message[0] == MessageType.BYE.getId()) {
-					sendMessageToOthers(UsefulTh.charsToStr(message), this);
-				} else if (message[0] == MessageType.STOP_SERVER.getId()) {
-					sendMessageToOthers(UsefulTh.charsToStr(message), this);
-					stopServer();
+					if (msgListener != null) msgListener.recieveMessage(-1, message);
+					if (message[0] == MessageType.HEY.getByte()) {
+						sendMessageToOthers(message, this);
+					} else if (message[0] == MessageType.BYE.getByte()) {
+						sendMessageToOthers(message, this);
+					} else if (message[0] == MessageType.STOP_SERVER.getByte()) {
+						sendMessageToOthers(message, this);
+						stopServer();
+					}
 				}
-			}
 
 				stopClient();
 			} catch (IOException e) {
-				if (!done) stopClient();
+				stopClient();
 			}
 		}
 
 		public void stopClient() {
-			try {
-				out.close();
-				in.close();
-				clientSo.close();
-				done = true;
-			} catch (IOException e) {
-				e.printStackTrace();
+			if (!done) {
+				try {
+					out.close();
+					in.close();
+					clientSo.close();
+					done = true;
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
 		public void sendMessage(String message) {
-			message = UsefulTh.writeIntInStr(message.length())+message;
-			UsefulTh.printMessage(message);
-			out.print(message);
+			sendMessage(message.getBytes(StandardCharsets.UTF_8));
+		}
+
+		public void sendMessage(byte[] message) {
+			try {
+				out.writeInt(message.length);
+				out.write(message);
+			} catch (IOException e) {
+				stopClient();
+			}
 		}
 	}
 }

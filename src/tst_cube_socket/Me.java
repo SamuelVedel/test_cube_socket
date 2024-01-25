@@ -65,29 +65,30 @@ public class Me {
         return message;
     }
 
-    public int readActions(char[] message, int offset) {
+    public int readActions(byte[] message, int offset) {
         ++offset;
-        x = UsefulTh.readIntInChars(message, offset);
+        x = UsefulTh.readInt(message, offset);
         offset += UsefulTh.SIZE_OF_INT;
-        y = UsefulTh.readIntInChars(message, offset);
+        y = UsefulTh.readInt(message, offset);
         offset += UsefulTh.SIZE_OF_INT;
         if (message[offset] > 1) noMoreReasonToBe = true;
         ++offset;
+        System.out.println(x+" "+y);
         return offset;
     }
 
     private void sendPressed(char state, char i) {
-        String message = ""+MessageType.OTHER.getId()+(char)id+MessageType.PRESSED_MSG.getId()+state+i;
+        String message = ""+(char)MessageType.OTHER.getByte()+(char)id+(char)MessageType.PRESSED_MSG.getByte()+state+i;
         play.client.sendMessage(message);
     }
 
-    public void recieveMessage(char[] message) {
-        if (message[2] == MessageType.PRESSED_MSG.getId()) {
+    public void recieveMessage(byte[] message) {
+        if (message[2] == MessageType.PRESSED_MSG.getByte()) {
             recievePressed(message);
         }
     }
 
-    private void recievePressed(char[] message) {
+    private void recievePressed(byte[] message) {
         if (message[4] == 0) rightPressed = (message[3] == 1);
         if (message[4] == 1) downPressed = (message[3] == 1);
         if (message[4] == 2) leftPressed = (message[3] == 1);

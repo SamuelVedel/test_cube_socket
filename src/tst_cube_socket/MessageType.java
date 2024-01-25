@@ -1,22 +1,22 @@
 package tst_cube_socket;
 
 public enum MessageType {
-	HEY((char)0),
-	WELCOME((char)1),
-	BYE((char)2),
-	STOP_SERVER((char)3),
-	OTHER((char)4),
+	HEY(0),
+	WELCOME(1),
+	BYE(2),
+	STOP_SERVER(3),
+	OTHER(4),
 
-	PRESSED_MSG((char)5),
-	ACTIONS_MSG((char)6);
+	PRESSED_MSG(5),
+	ACTIONS_MSG(6);
 
-	private char id;
+	private byte by;
 
-	private MessageType(char id) {
-		this.id = id;
+	private MessageType(int by) {
+		this.by = (byte)by;
 	}
 
-	public char getId() {
-		return id;
+	public byte getByte() {
+		return by;
 	}
 }

@@ -28,27 +28,27 @@ public class Play {
 	private boolean ready = false;
 
 	private MessageListener msgListener = new MessageListener() {
-		
+
 		@Override
-		public void recieveMessage(int id, char[] message) {
-			if (message[0] == MessageType.HEY.getId()) {
+		public void recieveMessage(int id, byte[] message) {
+			if (message[0] == MessageType.HEY.getByte()) {
 				addAMe();
-			} else if (message[0] == MessageType.BYE.getId()) {
+			} else if (message[0] == MessageType.BYE.getByte()) {
 				mes.get(id).noMoreReasonToBe = true;
 			}
 
 			if (isHost()) {
-				if (message[0] == MessageType.HEY.getId()) {
-					server.sendMessageTo(id, ""+MessageType.WELCOME.getId()+(char)id);
-				} else if (message[0] == MessageType.OTHER.getId()) {
-					mes.get((int)message[1]).recieveMessage(message);
+				if (message[0] == MessageType.HEY.getByte()) {
+					server.sendMessageTo(mes.size()-2, ""+(char)MessageType.WELCOME.getByte()+(char)(mes.size()-2));
+				} else if (message[0] == MessageType.OTHER.getByte()) {
+					mes.get(message[1]).recieveMessage(message);
 				}
 			} else {
 				UsefulTh.printMessage(message);
-				if (message[0] == MessageType.ACTIONS_MSG.getId() && ready) {
+				if (message[0] == MessageType.ACTIONS_MSG.getByte() && ready) {
 					readActions(message);
-				} else if (message[0] == MessageType.WELCOME.getId()) {
-					setId((int)message[1]+1);
+				} else if (message[0] == MessageType.WELCOME.getByte()) {
+					setId(message[1]+1);
 					for (int i = 0; i <= getId(); ++i) {
 						addAMe();
 					}
@@ -83,13 +83,13 @@ public class Play {
 	public Play(int port) {
 		host = true;
 		server = new Server();
+		id = 0;
 		server.start(port);
 		server.setMessageListener(msgListener);
 
 		/*client = new Client();
 		client.setMessageListener(msgListener);
 		client.startConnection("127.0.0.1", port);*/
-		id = 0;
 		initJF();
 		actions();
 	}
@@ -98,7 +98,7 @@ public class Play {
 		client = new Client();
 		client.setMessageListener(msgListener);
 		client.startConnection(ip, port);
-		client.sendMessage(""+MessageType.HEY.getId());
+		client.sendMessage(""+(char)MessageType.HEY.getByte());
 		initJF();
 	}
 
@@ -114,11 +114,11 @@ public class Play {
 		this.id = id;
 	}
 
-	private void readActions(char[] message) {
+	private void readActions(byte[] message) {
 		//UsefulTh.printMessage(message);
 		int offset = 1;
 		while (offset < message.length) {
-			offset = mes.get((int)message[offset]).readActions(message, offset);
+			offset = mes.get((char)message[offset]).readActions(message, offset);
 		}
 		vf.repaint();
 		toolkit.sync();
@@ -144,7 +144,7 @@ public class Play {
 		while (!ready);
 		while (true) {
 			if (isHost()) {
-				String message = ""+MessageType.ACTIONS_MSG.getId();
+				String message = ""+(char)MessageType.ACTIONS_MSG.getByte();
 
 				for (int i = mes.size()-1; i >= 0; --i) {
 					mes.get(i).action();

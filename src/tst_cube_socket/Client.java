@@ -2,11 +2,12 @@ package tst_cube_socket;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 
 public class Client {
 	private Socket clientSo;
-	private PrintWriter out;
-	private BufferedReader in;
+	private DataOutputStream out;
+	private DataInputStream in;
 
 	private MessageListener msgListener = null;
 
@@ -15,8 +16,9 @@ public class Client {
 	public void startConnection(String ip, int port) {
 		try {
 			clientSo = new Socket(ip, port);
-			out = new PrintWriter(clientSo.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(clientSo.getInputStream()));
+			out = new DataOutputStream(clientSo.getOutputStream());
+			in = new DataInputStream(new BufferedInputStream(clientSo.getInputStream()));
+
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -36,41 +38,46 @@ public class Client {
 	}
 	
 	public void sendMessage(String message) {
-		message = UsefulTh.writeIntInStr(message.length())+message;
-		//System.out.print("hey:"+message);
-		out.print(message);
+		sendMessage(message.getBytes(StandardCharsets.UTF_8));
+	}
+
+	public void sendMessage(byte[] message) {
+		try {
+			out.writeInt(message.length);
+			out.write(message);
+		} catch (IOException e) {
+			stopConnection();
+		}
 	}
 
 	public void stopConnection() {
-		out.close();
-		try {
-			in.close();
-			clientSo.close();
-			stopped = true;
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (!stopped) {
+			try {
+				out.close();
+				in.close();
+				clientSo.close();
+				stopped = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	public void recieveMessages() {
 		try {
 			while (!stopped) {
-				System.out.println("hey");
-				char[] sizeStr = new char[UsefulTh.SIZE_OF_INT];
-				in.read(sizeStr, 0, UsefulTh.SIZE_OF_INT);
-				int size = UsefulTh.readIntInChars(sizeStr);
-				char[] message = new char[size];
-				in.read(message, 0, size);
+				int length = in.readInt();
+				byte[] message = new byte[length];
+				in.readFully(message, 0, length);
 
-				UsefulTh.printMessage(message);
 				if (msgListener != null) msgListener.recieveMessage(-1, message);
-				if (message[0] == MessageType.STOP_SERVER.getId()) {
+				if (message[0] == MessageType.STOP_SERVER.getByte()) {
 					stopConnection();
 					break;
 				}
 			}
 		} catch (IOException e) {
-			if (!stopped) stopConnection();
+			stopConnection();
 		}
 	}
 }
