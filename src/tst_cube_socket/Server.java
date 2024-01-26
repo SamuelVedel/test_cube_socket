@@ -64,6 +64,10 @@ class Server {
 		}
 	}
 
+	public void sendMessageToOthers(byte[] message, int id) {
+		sendMessageToOthers(message, cvhs.get(id));
+	}
+
 	public void sendMessageTo(int id, String message) {
 		sendMessageTo(id, message.getBytes(StandardCharsets.UTF_8));
 	}
@@ -111,6 +115,8 @@ class Server {
 					} else if (message[0] == MessageType.STOP_SERVER.getByte()) {
 						sendMessageToOthers(message, this);
 						stopServer();
+					} else if (message[0] == MessageType.PRESSED_MSG.getByte()) {
+						sendMessageToAll(message);
 					}
 				}
 

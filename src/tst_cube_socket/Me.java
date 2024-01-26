@@ -30,40 +30,38 @@ public class Me {
     }
 
     public void startMoving(int keyCode) {
+        if (keyCode == 39 && !rightPressed) sendPressed(0, 1);
+        else if (keyCode == 40 && !downPressed) sendPressed(1, 1);
+        else if (keyCode == 37 && !leftPressed) sendPressed(2, 1);
+        else if (keyCode == 38 && !upPressed) sendPressed(3, 1);
         if (play.isHost()) {
             if (keyCode == 39) rightPressed = true;
             else if (keyCode == 40) downPressed = true;
             else if (keyCode == 37) leftPressed = true;
             else if (keyCode == 38) upPressed = true;
-        } else {
-            if (keyCode == 39) sendPressed((char)1, (char)0);
-            if (keyCode == 40) sendPressed((char)1, (char)1);
-            if (keyCode == 37) sendPressed((char)1, (char)2);
-            if (keyCode == 38) sendPressed((char)1, (char)3);
         }
     }
 
     public void stopMoving(int keyCode) {
-        if (play.isHost()) {
+        if (keyCode == 39) sendPressed(0, 0);
+        else if (keyCode == 40) sendPressed(1, 0);
+        else if (keyCode == 37) sendPressed(2, 0);
+        else if (keyCode == 38) sendPressed(3, 0);
+        //if (play.isHost()) {
             if (keyCode == 39) rightPressed = false;
             else if (keyCode == 40) downPressed = false;
             else if (keyCode == 37) leftPressed = false;
             else if (keyCode == 38) upPressed = false;
-        } else {
-            if (keyCode == 39) sendPressed((char)0, (char)0);
-            if (keyCode == 40) sendPressed((char)0, (char)1);
-            if (keyCode == 37) sendPressed((char)0, (char)2);
-            if (keyCode == 38) sendPressed((char)0, (char)3);
-        }
+        //}
     }
 
     public static int getSizeOfActionsMessage() {
-        return 1+2*UsefulTh.SIZE_OF_INT+1;
+        return UsefulTh.SIZE_OF_INT+2*UsefulTh.SIZE_OF_INT+1;
     }
 
     public int writeActions(byte[] message, int offset) {
-        message[offset] = (byte)id;
-        ++offset;
+        UsefulTh.writeInt(message, offset, id);
+        offset += UsefulTh.SIZE_OF_INT;
         UsefulTh.writeInt(message, offset, x);
         offset += UsefulTh.SIZE_OF_INT;
         UsefulTh.writeInt(message, offset, y);
@@ -74,7 +72,7 @@ public class Me {
     }
 
     public int readActions(byte[] message, int offset) {
-        ++offset;
+        offset += UsefulTh.SIZE_OF_INT;
         x = UsefulTh.readInt(message, offset);
         offset += UsefulTh.SIZE_OF_INT;
         y = UsefulTh.readInt(message, offset);
@@ -84,22 +82,26 @@ public class Me {
         return offset;
     }
 
-    private void sendPressed(char state, char i) {
-        String message = ""+(char)MessageType.OTHER.getByte()+(char)id+(char)MessageType.PRESSED_MSG.getByte()+state+i;
-        play.client.sendMessage(message);
+    private void sendPressed(int i, int state) {
+        int offset = 0;
+        byte[] message = new byte[1+UsefulTh.SIZE_OF_INT+2];
+        message[0] = MessageType.PRESSED_MSG.getByte();
+        ++offset;
+        UsefulTh.writeInt(message, offset, id);
+        offset += UsefulTh.SIZE_OF_INT;
+        message[offset] = (byte)i;
+        ++offset;
+        message[offset] = (byte)state;
+        //++offset;
+        if (play.isHost()) play.server.sendMessageToAll(message);
+        else play.client.sendMessage(message);
     }
 
-    public void recieveMessage(byte[] message) {
-        if (message[2] == MessageType.PRESSED_MSG.getByte()) {
-            recievePressed(message);
-        }
-    }
-
-    private void recievePressed(byte[] message) {
-        if (message[4] == 0) rightPressed = (message[3] == 1);
-        if (message[4] == 1) downPressed = (message[3] == 1);
-        if (message[4] == 2) leftPressed = (message[3] == 1);
-        if (message[4] == 3) upPressed = (message[3] == 1);
+    public void recievePressed(byte[] message) {
+        if (message[1+UsefulTh.SIZE_OF_INT] == 0) rightPressed = (message[2+UsefulTh.SIZE_OF_INT] == 1);
+        if (message[1+UsefulTh.SIZE_OF_INT] == 1) downPressed = (message[2+UsefulTh.SIZE_OF_INT] == 1);
+        if (message[1+UsefulTh.SIZE_OF_INT] == 2) leftPressed = (message[2+UsefulTh.SIZE_OF_INT] == 1);
+        if (message[1+UsefulTh.SIZE_OF_INT] == 3) upPressed = (message[2+UsefulTh.SIZE_OF_INT] == 1);
     }
 
     public void display(Graphics2D g2d) {

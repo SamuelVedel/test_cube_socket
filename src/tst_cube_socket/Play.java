@@ -16,7 +16,7 @@ import javax.swing.JFrame;
 public class Play {
 	Toolkit toolkit = Toolkit.getDefaultToolkit();
 
-	private Server server = null;
+	public Server server = null;
 	public Client client;
 	private boolean host;
 
@@ -24,6 +24,7 @@ public class Play {
 
 	private ArrayList<Me> mes = new ArrayList<>();
 	private int id = -1;
+	private byte[] actionsMessage;
 
 	private boolean ready = false;
 
@@ -35,23 +36,26 @@ public class Play {
 				addAMe();
 			} else if (message[0] == MessageType.BYE.getByte()) {
 				mes.get(id).noMoreReasonToBe = true;
+			} else if (message[0] == MessageType.PRESSED_MSG.getByte()) {
+				int i = UsefulTh.readInt(message, 1);
+				mes.get(i).recievePressed(message);
 			}
 
 			if (isHost()) {
 				if (message[0] == MessageType.HEY.getByte()) {
 					server.sendMessageTo(mes.size()-2, ""+(char)MessageType.WELCOME.getByte()+(char)(mes.size()-2));
-				} else if (message[0] == MessageType.OTHER.getByte()) {
-					mes.get(message[1]).recieveMessage(message);
 				}
 			} else {
 				if (message[0] == MessageType.ACTIONS_MSG.getByte() && ready) {
-					readActions(message);
+					actionsMessage = message;
 				} else if (message[0] == MessageType.WELCOME.getByte()) {
 					setId(message[1]+1);
 					for (int i = 0; i <= getId(); ++i) {
 						addAMe();
 					}
 					ready = true;
+				} if (message[0] == MessageType.STOP_SERVER.getByte()) {
+					stop();
 				}
 			}
 		}
@@ -99,6 +103,7 @@ public class Play {
 		client.startConnection(ip, port);
 		client.sendMessage(""+(char)MessageType.HEY.getByte());
 		initJF();
+		actions();
 	}
 
 	private void addAMe() {
@@ -116,10 +121,9 @@ public class Play {
 	private void readActions(byte[] message) {
 		int offset = 1;
 		while (offset < message.length) {
-			offset = mes.get((char)message[offset]).readActions(message, offset);
+			int i = UsefulTh.readInt(message, offset);
+			offset = mes.get(i).readActions(message, offset);
 		}
-		vf.repaint();
-		toolkit.sync();
 	}
 
 	private void initJF() {
@@ -144,35 +148,56 @@ public class Play {
 		}
 
 		while (!ready);
-		while (true) {
-			if (isHost()) {
-				byte[] message = new byte[getSizeOfActionsMessage()];
-				message[0] = MessageType.ACTIONS_MSG.getByte();
-				int offset = 1;
 
-				for (int i = mes.size()-1; i >= 0; --i) {
-					mes.get(i).action();
-					offset = mes.get(i).writeActions(message, offset);
-					if (mes.get(i).noMoreReasonToBe) {
-						mes.remove(i);
-					}
+		int time = 0;
+		while (true) {
+			boolean sendActions = false;
+			if (isHost()) {
+				//sendActions = time%5 == 0;
+				sendActions = true;
+			}
+
+			byte[] message = new byte[getSizeOfActionsMessage()];;
+			if (sendActions) message[0] = MessageType.ACTIONS_MSG.getByte();
+			int offset = 1;
+
+			for (int i = mes.size()-1; i >= 0; --i) {
+				mes.get(i).action();
+				if (sendActions) offset = mes.get(i).writeActions(message, offset);
+				if (mes.get(i).noMoreReasonToBe) {
+					mes.remove(i);
 				}
-				//UsefulTh.printMessage(message);
-				server.sendMessageToAll(message);
-				vf.repaint();
-				toolkit.sync();
-				try {
-					Thread.sleep(1000/60);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+			}
+			if (sendActions) server.sendMessageToAll(message);
+
+			if (actionsMessage != null) {
+				readActions(actionsMessage);
+				actionsMessage = null;
+			}
+
+			vf.repaint();
+			toolkit.sync();
+			++time;
+			try {
+				Thread.sleep(1000/60);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
 
 	private void stop() {
-		if (isHost()) server.stopServer();
+		if (isHost()) {
+			server.stopServer();
+			byte[] message = {MessageType.STOP_SERVER.getByte()};
+			server.sendMessageToAll(message);
+		}
 		else client.stopConnection();
+		/*try {
+			Thread.sleep(1000/30);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}*/
 		System.exit(0);
 	}
 
